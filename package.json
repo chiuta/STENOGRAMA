@@ -1,0 +1,17 @@
+{
+  "name": "stenograma",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Transcriere audio lungă, local în browser (Whisper). Un singur fișier HTML.",
+  "license": "MIT",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "test:unit": "node --test tests/unit.test.js",
+    "test:e2e": "node --test tests/e2e.test.js",
+    "serve": "node tests/serve.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.1"
+  }
+}

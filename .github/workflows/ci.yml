@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: latest   # cel mai recent Node.js (nu mai vechi de 24)
+      - name: Versiuni
+        run: node -v && npm -v && lsb_release -ds
+      - name: ffmpeg și unzip
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg unzip
+      - run: npm install --no-audit --no-fund
+      - name: Browser pentru testele cap-coadă
+        run: |
+          if command -v google-chrome >/dev/null; then
+            echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
+      - name: Validări statice
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8'));console.log('manifest ok')"
+          node -e "const h=require('fs').readFileSync('index.html','utf8');const j=h.match(/<script>([\s\S]*)<\/script>/)[1];new Function(j);console.log('sintaxă ok, '+(h.length/1024).toFixed(0)+' KB')"
+      - run: npm test

@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; connect-src 'self' https: blob: data:; worker-src 'self' blob: https://cdn.jsdelivr.net; media-src blob:; img-src 'self' data: blob:; manifest-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#1f5f8b">
+<meta name="color-scheme" content="light dark">
+<title>STENOGRAMA</title>
+<style>
+:root{--bg:#f6f5f1;--fg:#1c1b19;--mut:#6a665e;--card:#fff;--bd:#d9d5ca;--ac:#1f5f8b;--acf:#fff;--ok:#2d7a3e;--er:#b3261e;--cur:#fff3c4}
+@media (prefers-color-scheme:dark){:root{--bg:#161614;--fg:#ecebe6;--mut:#a29e94;--card:#211f1c;--bd:#3a3732;--ac:#6fb1e0;--acf:#0d1b26;--ok:#7fcf92;--er:#ff8a80;--cur:#4a4217}}
+*{box-sizing:border-box}
+html{font-size:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:1rem/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:60rem;margin:0 auto;padding:1rem}
+h1{font-size:1.6rem;margin:.4rem 0 0;letter-spacing:.04em}
+.sub{color:var(--mut);margin:.2rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:.8rem;padding:1rem;margin:0 0 1rem}
+.card h2{font-size:1.05rem;margin:0 0 .6rem}
+#drop{border:2px dashed var(--bd);border-radius:.8rem;padding:1.4rem 1rem;text-align:center;cursor:pointer}
+#drop.on,#drop:focus-visible{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 10%,transparent)}
+#drop b{display:block;font-size:1.05rem}
+.row{display:flex;flex-wrap:wrap;gap:.7rem;align-items:end}
+.row>label{display:flex;flex-direction:column;gap:.2rem;font-size:.9rem;color:var(--mut);min-width:12rem;flex:1}
+select,button,input[type=text]{font:inherit;color:var(--fg)}
+select{background:var(--card);border:1px solid var(--bd);border-radius:.5rem;padding:.5rem;min-height:2.6rem}
+button{background:var(--card);border:1px solid var(--bd);border-radius:.5rem;padding:.5rem .9rem;min-height:2.6rem;cursor:pointer}
+button.pri{background:var(--ac);color:var(--acf);border-color:var(--ac);font-weight:600}
+button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,select:focus-visible,[contenteditable]:focus-visible,#drop:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.chk{display:flex;gap:.5rem;align-items:center;font-size:.95rem;margin:.5rem 0 0}
+.chk input{width:1.15rem;height:1.15rem}
+progress{width:100%;height:1rem;margin:.6rem 0 .2rem}
+#status{margin:.3rem 0;min-height:1.5rem}
+#status.er{color:var(--er)}
+.mut{color:var(--mut);font-size:.9rem}
+audio{width:100%;margin-top:.7rem}
+#list{max-height:34rem;overflow:auto;border:1px solid var(--bd);border-radius:.6rem}
+.seg{display:flex;gap:.6rem;padding:.35rem .6rem;border-bottom:1px solid var(--bd)}
+.seg:last-child{border-bottom:0}
+.seg.cur{background:var(--cur)}
+.seg .ts{flex:none;min-height:0;padding:.1rem .45rem;font-variant-numeric:tabular-nums;font-size:.85rem;align-self:flex-start;margin-top:.1rem}
+.seg .tx{flex:1;outline:0;white-space:pre-wrap;word-break:break-word;border-radius:.3rem;padding:.1rem .2rem}
+.seg .tx:focus{background:color-mix(in srgb,var(--ac) 12%,transparent)}
+.bar{display:flex;flex-wrap:wrap;gap:.5rem;margin:.7rem 0 0}
+details{margin-top:.8rem}
+summary{cursor:pointer}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px solid var(--bd);border-radius:.5rem;padding:.6rem;font-size:.82rem}
+dialog{border:1px solid var(--bd);border-radius:.8rem;background:var(--card);color:var(--fg);max-width:26rem}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog .bar{justify-content:flex-end}
+.vh{position:absolute;left:-9999px}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.5rem}
+.top label{display:flex;gap:.5rem;align-items:center;font-size:.9rem;color:var(--mut)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><h1>STENOGRAMA</h1><label><span data-i18n="uiLang"></span><select id="ui"><option value="ro">Română</option><option value="en">English</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option><option value="it">Italiano</option><option value="hu">Magyar</option></select></label></div>
+<p class="sub" data-i18n="sub"></p>
+
+<section class="card" aria-labelledby="h1a">
+<h2 id="h1a" data-i18n="h1a"></h2>
+<div id="drop" role="button" tabindex="0" aria-describedby="dropinfo">
+<b data-i18n="dropT"></b>
+<span class="mut" id="dropinfo" data-i18n="dropInfo"></span>
+</div>
+<input id="file" class="vh" type="file" accept="audio/*,video/mp4,video/webm,.mp3,.wav,.m4a,.ogg,.opus,.flac,.aac,.mp4,.mpeg,.mpga" data-i18n-aria="ariaFile">
+<p id="finfo" class="mut" aria-live="polite"></p>
+<audio id="player" controls hidden></audio>
+</section>
+
+<section class="card" aria-labelledby="h2a">
+<h2 id="h2a" data-i18n="h2a"></h2>
+<div class="row">
+<label><span data-i18n="lblModel"></span>
+<select id="model">
+<option value="tiny" data-i18n="mTiny"></option>
+<option value="base" data-i18n="mBase"></option>
+<option value="small" selected data-i18n="mSmall"></option>
+<option value="turbo" data-i18n="mTurbo"></option>
+</select></label>
+<label><span data-i18n="lblLang"></span>
+<select id="lang">
+<option value="romanian" selected>Română</option>
+<option value="auto" data-i18n="auto"></option>
+<option value="english">English</option>
+<option value="french">Français</option>
+<option value="german">Deutsch</option>
+<option value="spanish">Español</option>
+<option value="italian">Italiano</option>
+<option value="hungarian">Magyar</option>
+</select></label>
+</div>
+<label class="chk"><input type="checkbox" id="hallu" checked> <span data-i18n="hallu"></span></label>
+<p class="mut" id="devinfo"></p>
+<div class="bar">
+<button id="go" class="pri" disabled data-i18n="go"></button>
+<button id="stop" disabled data-i18n="stop"></button>
+<button id="clear" disabled data-i18n="clear"></button>
+</div>
+<progress id="prog" max="1000" value="0" hidden></progress>
+<div id="status" role="status" aria-live="polite"></div>
+<details id="errbox" hidden><summary data-i18n="errSum"></summary><pre id="errtxt"></pre><button id="errcopy" data-i18n="errCopy"></button></details>
+</section>
+
+<section class="card" aria-labelledby="h3a">
+<h2 id="h3a" data-i18n="h3a"></h2>
+<p class="mut" data-i18n="hint3"></p>
+<div id="list" tabindex="-1" data-i18n-aria="ariaSegs"></div>
+<p id="count" class="mut" aria-live="polite"></p>
+<label class="chk"><input type="checkbox" id="withts"> <span data-i18n="withts"></span></label>
+<div class="bar">
+<button id="cp" disabled data-i18n="cp"></button>
+<button id="dtxt" disabled>.txt</button>
+<button id="dsrt" disabled>.srt</button>
+<button id="dvtt" disabled>.vtt</button>
+<button id="ddocx" disabled>.docx</button>
+</div>
+</section>
+<p class="mut"><span data-i18n="foot1"></span> <a href="https://huggingface.co/docs/transformers.js" rel="noopener noreferrer" target="_blank">transformers.js</a> <span data-i18n="foot2"></span></p>
+</main>
+
+<dialog id="dlg"><p id="dlgq"></p><div class="bar" id="dlgb"></div></dialog>
+
+<script>
+'use strict';
+/* ===== Constante ===== */
+const I18N={
+ro:{sub:"Transcriere audio lungă, direct în browser. Fișierul tău nu pleacă din dispozitiv; doar modelul Whisper se descarcă o singură dată.",
+h1a:"1. Fișier audio",dropT:"Alege sau trage aici un fișier audio",dropInfo:"MP3 și WAV se citesc pe bucăți (durată practic nelimitată). Alte formate (M4A, OGG/Opus, MP4, FLAC) se decodează întregi și merg bine până la ~90 de minute.",
+h2a:"2. Setări",lblModel:"Model",mTiny:"Rapid — tiny (~40 MB, calitate slabă)",mBase:"Echilibrat — base (~80 MB)",mSmall:"Bun — small (~250 MB, recomandat)",mTurbo:"Foarte bun — large-v3-turbo (~0,8 GB, doar cu WebGPU)",
+lblLang:"Limba vorbită",auto:"Detectare automată",hallu:"Elimină frazele-fantomă tipice Whisper (ex. „Mulțumesc pentru vizionare”) și repetițiile",
+go:"Pornește transcrierea",stop:"Oprește",clear:"Șterge transcrierea",errSum:"Detalii eroare",errCopy:"Copiază detalii pentru suport",
+h3a:"3. Transcrierea",hint3:"Apasă pe un timp ca să asculți locul respectiv. Textul se poate corecta direct; exporturile folosesc textul corectat.",
+withts:"Cu marcaje de timp în .txt și .docx",cp:"Copiază textul",foot1:"Whisper rulează cu",foot2:"(versiune fixată, verificată prin amprentă SHA-384 înainte de import). Cu WebGPU este de multe ori mai rapid decât timpul real; pe procesor (WASM) poate dura de câteva ori durata audio. Ține fila deschisă și ecranul treaz cât lucrează.",
+uiLang:"Limba interfeței",ariaFile:"Fișier audio",ariaSegs:"Segmentele transcrierii",
+devGpu:"WebGPU disponibil: se va folosi placa video (de regulă mult mai rapid).",devCpu:"WebGPU indisponibil: transcrierea rulează pe procesor (WASM), mai lent.",devTurbo:" Modelul „large-v3-turbo” nu merge fără WebGPU; alege „small”.",
+none:"Nu există încă transcriere.",count:"{0} segmente, {1} cuvinte",tsTitle:"Ascultă de aici",segAria:"Text segment la {0}",
+delQ:"Ștergi transcrierea curentă (și copia salvată în browser)?",cancel:"Anulează",del:"Șterge",deleted:"Transcrierea a fost ștearsă.",
+savedPartial:"Există o transcriere parțială salvată (până la {0}). Apasă „Pornește” ca să continui sau să o iei de la capăt.",fileLoaded:"Fișier încărcat. Alege setările și pornește transcrierea.",
+errPre:"Eroare: {0}",hInt:" Amprenta bibliotecii nu se potrivește: nu continua și raportează problema.",hNet:" Verifică conexiunea la internet: la prima folosire se descarcă biblioteca și modelul.",hMem:" Memorie insuficientă: alege un model mai mic sau un fișier mai scurt.",
+copiedDet:"Detaliile au fost copiate.",txtCopied:"Textul a fost copiat.",verLib:"Se verifică biblioteca Whisper (SHA-384)…",libFail:"Biblioteca nu a putut fi descărcată (HTTP {0})",
+loadModel:"Se încarcă modelul ({0})… la prima folosire se descarcă.",devGpuN:"WebGPU",devCpuN:"procesor",dlModel:"Se descarcă modelul… {0}% ({1} din {2})",initModel:"Se inițializează modelul…",
+gpuFail:"WebGPU nu a pornit ({0}); trec pe procesor…",needGpu:"Modelul „large-v3-turbo” cere WebGPU, indisponibil aici. Alege modelul „small”.",gpuTr:"WebGPU a eșuat la transcriere; trec pe procesor (mai lent)…",
+stopping:"Se oprește după felia curentă… (progresul rămâne salvat)",analyzing:"Se analizează fișierul…",idxMp3:"Se indexează cadrele MP3…",decFull:"Se decodează tot fișierul (poate dura)…",
+tooBig:"Formatul acestui fișier trebuie decodat întreg în memorie, iar fișierul are {0}. Convertește-l în MP3 sau WAV (de ex. cu ffmpeg sau Audacity) și încearcă din nou.",
+noDur:"Nu am putut determina durata fișierului.",decFail:"Decodare eșuată la {0}",transc:"Se transcrie {0} – {1} din {2}…",progEta:"Gata {0}% ({1} din {2}). Timp rămas: ~{3}.",
+stopped:"Oprit la {0}. Poți continua mai târziu din același fișier.",done:"Gata: {0} segmente. Ascultă și corectează unde e nevoie, apoi exportă.",doneDrop:"Gata: {0} segmente ({1} fraze-fantomă sau repetiții eliminate). Ascultă și corectează unde e nevoie, apoi exportă.",
+partQ:"Există o transcriere parțială{0}. Ce vrei să faci?",partUntil:" până la {0}",restart:"Începe de la zero",cont:"Continuă de acolo",finfo:"{0} — {1}, durată {2}",docTitle:"Transcriere: {0}",uH:"h",uM:"min",uS:"s"},
+en:{sub:"Transcribe long audio right in your browser. Your file never leaves your device; only the Whisper model is downloaded, once.",
+h1a:"1. Audio file",dropT:"Choose or drop an audio file here",dropInfo:"MP3 and WAV are read in pieces (practically unlimited length). Other formats (M4A, OGG/Opus, MP4, FLAC) are decoded whole and work well up to ~90 minutes.",
+h2a:"2. Settings",lblModel:"Model",mTiny:"Fast — tiny (~40 MB, low quality)",mBase:"Balanced — base (~80 MB)",mSmall:"Good — small (~250 MB, recommended)",mTurbo:"Very good — large-v3-turbo (~0.8 GB, WebGPU only)",
+lblLang:"Spoken language",auto:"Auto-detect",hallu:"Remove typical Whisper ghost phrases (e.g. “Thanks for watching”) and repetitions",
+go:"Start transcription",stop:"Stop",clear:"Clear transcript",errSum:"Error details",errCopy:"Copy details for support",
+h3a:"3. Transcript",hint3:"Click a time to listen at that point. The text is editable; exports use the corrected text.",
+withts:"Include timestamps in .txt and .docx",cp:"Copy text",foot1:"Whisper runs with",foot2:"(pinned version, verified by SHA-384 hash before import). With WebGPU it is often faster than real time; on the CPU (WASM) it can take several times the audio length. Keep the tab open and the screen awake while it works.",
+uiLang:"Interface language",ariaFile:"Audio file",ariaSegs:"Transcript segments",
+devGpu:"WebGPU available: the graphics card will be used (usually much faster).",devCpu:"WebGPU unavailable: transcription runs on the CPU (WASM), slower.",devTurbo:" The “large-v3-turbo” model does not work without WebGPU; choose “small”.",
+none:"No transcript yet.",count:"{0} segments, {1} words",tsTitle:"Listen from here",segAria:"Segment text at {0}",
+delQ:"Delete the current transcript (and the copy saved in the browser)?",cancel:"Cancel",del:"Delete",deleted:"The transcript was deleted.",
+savedPartial:"A partial transcript is saved (up to {0}). Press “Start” to continue or start over.",fileLoaded:"File loaded. Choose settings and start the transcription.",
+errPre:"Error: {0}",hInt:" The library hash does not match: do not continue and report the problem.",hNet:" Check your internet connection: the library and the model are downloaded on first use.",hMem:" Not enough memory: choose a smaller model or a shorter file.",
+copiedDet:"Details copied.",txtCopied:"Text copied.",verLib:"Verifying the Whisper library (SHA-384)…",libFail:"The library could not be downloaded (HTTP {0})",
+loadModel:"Loading the model ({0})… it is downloaded on first use.",devGpuN:"WebGPU",devCpuN:"CPU",dlModel:"Downloading the model… {0}% ({1} of {2})",initModel:"Initializing the model…",
+gpuFail:"WebGPU did not start ({0}); switching to the CPU…",needGpu:"The “large-v3-turbo” model needs WebGPU, which is unavailable here. Choose the “small” model.",gpuTr:"WebGPU failed during transcription; switching to the CPU (slower)…",
+stopping:"Stopping after the current slice… (progress stays saved)",analyzing:"Analyzing the file…",idxMp3:"Indexing MP3 frames…",decFull:"Decoding the whole file (this may take a while)…",
+tooBig:"This file format must be decoded whole in memory, and the file is {0}. Convert it to MP3 or WAV (e.g. with ffmpeg or Audacity) and try again.",
+noDur:"Could not determine the file duration.",decFail:"Decoding failed at {0}",transc:"Transcribing {0} – {1} of {2}…",progEta:"Done {0}% ({1} of {2}). Time left: ~{3}.",
+stopped:"Stopped at {0}. You can continue later from the same file.",done:"Done: {0} segments. Listen and correct where needed, then export.",doneDrop:"Done: {0} segments ({1} ghost phrases or repetitions removed). Listen and correct where needed, then export.",
+partQ:"A partial transcript exists{0}. What do you want to do?",partUntil:" up to {0}",restart:"Start over",cont:"Continue from there",finfo:"{0} — {1}, duration {2}",docTitle:"Transcript: {0}",uH:"h",uM:"min",uS:"s"},
+fr:{sub:"Transcription de longs fichiers audio, directement dans le navigateur. Votre fichier ne quitte pas votre appareil ; seul le modèle Whisper est téléchargé, une seule fois.",
+h1a:"1. Fichier audio",dropT:"Choisissez ou déposez ici un fichier audio",dropInfo:"Les MP3 et WAV sont lus par morceaux (durée pratiquement illimitée). Les autres formats (M4A, OGG/Opus, MP4, FLAC) sont décodés en entier et fonctionnent bien jusqu’à ~90 minutes.",
+h2a:"2. Réglages",lblModel:"Modèle",mTiny:"Rapide — tiny (~40 Mo, qualité faible)",mBase:"Équilibré — base (~80 Mo)",mSmall:"Bon — small (~250 Mo, recommandé)",mTurbo:"Très bon — large-v3-turbo (~0,8 Go, WebGPU uniquement)",
+lblLang:"Langue parlée",auto:"Détection automatique",hallu:"Supprimer les phrases fantômes typiques de Whisper (p. ex. « Merci d’avoir regardé ») et les répétitions",
+go:"Lancer la transcription",stop:"Arrêter",clear:"Effacer la transcription",errSum:"Détails de l’erreur",errCopy:"Copier les détails pour le support",
+h3a:"3. Transcription",hint3:"Cliquez sur un horodatage pour écouter à cet endroit. Le texte est modifiable ; les exports utilisent le texte corrigé.",
+withts:"Avec horodatages dans .txt et .docx",cp:"Copier le texte",foot1:"Whisper fonctionne avec",foot2:"(version figée, vérifiée par empreinte SHA-384 avant l’import). Avec WebGPU, c’est souvent plus rapide que le temps réel ; sur le processeur (WASM), cela peut prendre plusieurs fois la durée de l’audio. Gardez l’onglet ouvert et l’écran allumé pendant le traitement.",
+uiLang:"Langue de l’interface",ariaFile:"Fichier audio",ariaSegs:"Segments de la transcription",
+devGpu:"WebGPU disponible : la carte graphique sera utilisée (en général bien plus rapide).",devCpu:"WebGPU indisponible : la transcription s’exécute sur le processeur (WASM), plus lentement.",devTurbo:" Le modèle « large-v3-turbo » ne fonctionne pas sans WebGPU ; choisissez « small ».",
+none:"Aucune transcription pour l’instant.",count:"{0} segments, {1} mots",tsTitle:"Écouter à partir d’ici",segAria:"Texte du segment à {0}",
+delQ:"Supprimer la transcription actuelle (et la copie enregistrée dans le navigateur) ?",cancel:"Annuler",del:"Supprimer",deleted:"La transcription a été supprimée.",
+savedPartial:"Une transcription partielle est enregistrée (jusqu’à {0}). Appuyez sur « Lancer » pour continuer ou recommencer.",fileLoaded:"Fichier chargé. Choisissez les réglages et lancez la transcription.",
+errPre:"Erreur : {0}",hInt:" L’empreinte de la bibliothèque ne correspond pas : ne continuez pas et signalez le problème.",hNet:" Vérifiez votre connexion Internet : la bibliothèque et le modèle sont téléchargés à la première utilisation.",hMem:" Mémoire insuffisante : choisissez un modèle plus petit ou un fichier plus court.",
+copiedDet:"Détails copiés.",txtCopied:"Texte copié.",verLib:"Vérification de la bibliothèque Whisper (SHA-384)…",libFail:"La bibliothèque n’a pas pu être téléchargée (HTTP {0})",
+loadModel:"Chargement du modèle ({0})… téléchargé à la première utilisation.",devGpuN:"WebGPU",devCpuN:"processeur",dlModel:"Téléchargement du modèle… {0} % ({1} sur {2})",initModel:"Initialisation du modèle…",
+gpuFail:"WebGPU n’a pas démarré ({0}) ; passage au processeur…",needGpu:"Le modèle « large-v3-turbo » exige WebGPU, indisponible ici. Choisissez le modèle « small ».",gpuTr:"WebGPU a échoué pendant la transcription ; passage au processeur (plus lent)…",
+stopping:"Arrêt après la tranche en cours… (la progression reste enregistrée)",analyzing:"Analyse du fichier…",idxMp3:"Indexation des trames MP3…",decFull:"Décodage du fichier entier (peut être long)…",
+tooBig:"Ce format doit être décodé en entier en mémoire, et le fichier fait {0}. Convertissez-le en MP3 ou WAV (p. ex. avec ffmpeg ou Audacity) et réessayez.",
+noDur:"Impossible de déterminer la durée du fichier.",decFail:"Échec du décodage à {0}",transc:"Transcription de {0} – {1} sur {2}…",progEta:"Terminé à {0} % ({1} sur {2}). Temps restant : ~{3}.",
+stopped:"Arrêté à {0}. Vous pourrez continuer plus tard avec le même fichier.",done:"Terminé : {0} segments. Écoutez et corrigez si nécessaire, puis exportez.",doneDrop:"Terminé : {0} segments ({1} phrases fantômes ou répétitions supprimées). Écoutez et corrigez si nécessaire, puis exportez.",
+partQ:"Une transcription partielle existe{0}. Que voulez-vous faire ?",partUntil:" jusqu’à {0}",restart:"Recommencer",cont:"Continuer à partir de là",finfo:"{0} — {1}, durée {2}",docTitle:"Transcription : {0}",uH:"h",uM:"min",uS:"s"},
+de:{sub:"Lange Audiodateien direkt im Browser transkribieren. Ihre Datei verlässt das Gerät nicht; nur das Whisper-Modell wird einmalig heruntergeladen.",
+h1a:"1. Audiodatei",dropT:"Audiodatei auswählen oder hierher ziehen",dropInfo:"MP3 und WAV werden stückweise gelesen (praktisch unbegrenzte Länge). Andere Formate (M4A, OGG/Opus, MP4, FLAC) werden vollständig dekodiert und funktionieren bis etwa 90 Minuten gut.",
+h2a:"2. Einstellungen",lblModel:"Modell",mTiny:"Schnell — tiny (~40 MB, geringe Qualität)",mBase:"Ausgewogen — base (~80 MB)",mSmall:"Gut — small (~250 MB, empfohlen)",mTurbo:"Sehr gut — large-v3-turbo (~0,8 GB, nur mit WebGPU)",
+lblLang:"Gesprochene Sprache",auto:"Automatisch erkennen",hallu:"Typische Whisper-Geisterphrasen (z. B. „Vielen Dank fürs Zuschauen“) und Wiederholungen entfernen",
+go:"Transkription starten",stop:"Stopp",clear:"Transkript löschen",errSum:"Fehlerdetails",errCopy:"Details für den Support kopieren",
+h3a:"3. Transkript",hint3:"Auf eine Zeitmarke klicken, um die Stelle anzuhören. Der Text ist direkt bearbeitbar; Exporte verwenden den korrigierten Text.",
+withts:"Mit Zeitmarken in .txt und .docx",cp:"Text kopieren",foot1:"Whisper läuft mit",foot2:"(feste Version, vor dem Import per SHA-384-Hash geprüft). Mit WebGPU oft schneller als Echtzeit; auf dem Prozessor (WASM) kann es ein Mehrfaches der Audiolänge dauern. Tab geöffnet und Bildschirm aktiv lassen.",
+uiLang:"Oberflächensprache",ariaFile:"Audiodatei",ariaSegs:"Transkript-Segmente",
+devGpu:"WebGPU verfügbar: die Grafikkarte wird genutzt (meist deutlich schneller).",devCpu:"WebGPU nicht verfügbar: die Transkription läuft auf dem Prozessor (WASM), langsamer.",devTurbo:" Das Modell „large-v3-turbo“ funktioniert ohne WebGPU nicht; wählen Sie „small“.",
+none:"Noch kein Transkript.",count:"{0} Segmente, {1} Wörter",tsTitle:"Ab hier anhören",segAria:"Segmenttext bei {0}",
+delQ:"Aktuelles Transkript (und die im Browser gespeicherte Kopie) löschen?",cancel:"Abbrechen",del:"Löschen",deleted:"Das Transkript wurde gelöscht.",
+savedPartial:"Ein Teiltranskript ist gespeichert (bis {0}). „Starten“ drücken, um fortzusetzen oder neu zu beginnen.",fileLoaded:"Datei geladen. Einstellungen wählen und Transkription starten.",
+errPre:"Fehler: {0}",hInt:" Der Hash der Bibliothek stimmt nicht überein: nicht fortfahren und das Problem melden.",hNet:" Internetverbindung prüfen: Bibliothek und Modell werden beim ersten Gebrauch heruntergeladen.",hMem:" Nicht genug Speicher: kleineres Modell oder kürzere Datei wählen.",
+copiedDet:"Details kopiert.",txtCopied:"Text kopiert.",verLib:"Whisper-Bibliothek wird geprüft (SHA-384)…",libFail:"Die Bibliothek konnte nicht heruntergeladen werden (HTTP {0})",
+loadModel:"Modell wird geladen ({0})… beim ersten Gebrauch wird es heruntergeladen.",devGpuN:"WebGPU",devCpuN:"Prozessor",dlModel:"Modell wird heruntergeladen… {0} % ({1} von {2})",initModel:"Modell wird initialisiert…",
+gpuFail:"WebGPU ließ sich nicht starten ({0}); wechsle zum Prozessor…",needGpu:"Das Modell „large-v3-turbo“ benötigt WebGPU, das hier nicht verfügbar ist. Wählen Sie das Modell „small“.",gpuTr:"WebGPU ist bei der Transkription fehlgeschlagen; wechsle zum Prozessor (langsamer)…",
+stopping:"Stopp nach dem aktuellen Abschnitt… (Fortschritt bleibt gespeichert)",analyzing:"Datei wird analysiert…",idxMp3:"MP3-Frames werden indiziert…",decFull:"Gesamte Datei wird dekodiert (kann dauern)…",
+tooBig:"Dieses Dateiformat muss vollständig im Speicher dekodiert werden, und die Datei ist {0} groß. Wandeln Sie sie in MP3 oder WAV um (z. B. mit ffmpeg oder Audacity) und versuchen Sie es erneut.",
+noDur:"Die Dauer der Datei konnte nicht ermittelt werden.",decFail:"Dekodierung bei {0} fehlgeschlagen",transc:"Transkribiere {0} – {1} von {2}…",progEta:"{0} % erledigt ({1} von {2}). Verbleibende Zeit: ~{3}.",
+stopped:"Bei {0} gestoppt. Sie können später mit derselben Datei fortfahren.",done:"Fertig: {0} Segmente. Anhören, bei Bedarf korrigieren, dann exportieren.",doneDrop:"Fertig: {0} Segmente ({1} Geisterphrasen oder Wiederholungen entfernt). Anhören, bei Bedarf korrigieren, dann exportieren.",
+partQ:"Es gibt ein Teiltranskript{0}. Was möchten Sie tun?",partUntil:" bis {0}",restart:"Neu beginnen",cont:"Dort fortsetzen",finfo:"{0} — {1}, Dauer {2}",docTitle:"Transkript: {0}",uH:"Std.",uM:"Min.",uS:"Sek."},
+es:{sub:"Transcripción de audios largos directamente en el navegador. Tu archivo no sale del dispositivo; solo el modelo Whisper se descarga, una sola vez.",
+h1a:"1. Archivo de audio",dropT:"Elige o arrastra aquí un archivo de audio",dropInfo:"MP3 y WAV se leen por partes (duración prácticamente ilimitada). Otros formatos (M4A, OGG/Opus, MP4, FLAC) se decodifican enteros y funcionan bien hasta ~90 minutos.",
+h2a:"2. Ajustes",lblModel:"Modelo",mTiny:"Rápido — tiny (~40 MB, calidad baja)",mBase:"Equilibrado — base (~80 MB)",mSmall:"Bueno — small (~250 MB, recomendado)",mTurbo:"Muy bueno — large-v3-turbo (~0,8 GB, solo con WebGPU)",
+lblLang:"Idioma hablado",auto:"Detección automática",hallu:"Eliminar las frases fantasma típicas de Whisper (p. ej. «Gracias por ver») y las repeticiones",
+go:"Iniciar transcripción",stop:"Detener",clear:"Borrar transcripción",errSum:"Detalles del error",errCopy:"Copiar detalles para soporte",
+h3a:"3. Transcripción",hint3:"Pulsa un tiempo para escuchar ese punto. El texto se puede corregir directamente; las exportaciones usan el texto corregido.",
+withts:"Con marcas de tiempo en .txt y .docx",cp:"Copiar el texto",foot1:"Whisper funciona con",foot2:"(versión fijada, verificada con huella SHA-384 antes de importarla). Con WebGPU suele ser más rápido que el tiempo real; en el procesador (WASM) puede tardar varias veces la duración del audio. Mantén la pestaña abierta y la pantalla activa mientras trabaja.",
+uiLang:"Idioma de la interfaz",ariaFile:"Archivo de audio",ariaSegs:"Segmentos de la transcripción",
+devGpu:"WebGPU disponible: se usará la tarjeta gráfica (normalmente mucho más rápido).",devCpu:"WebGPU no disponible: la transcripción se ejecuta en el procesador (WASM), más lento.",devTurbo:" El modelo «large-v3-turbo» no funciona sin WebGPU; elige «small».",
+none:"Aún no hay transcripción.",count:"{0} segmentos, {1} palabras",tsTitle:"Escuchar desde aquí",segAria:"Texto del segmento en {0}",
+delQ:"¿Borrar la transcripción actual (y la copia guardada en el navegador)?",cancel:"Cancelar",del:"Borrar",deleted:"La transcripción se ha borrado.",
+savedPartial:"Hay una transcripción parcial guardada (hasta {0}). Pulsa «Iniciar» para continuar o empezar de nuevo.",fileLoaded:"Archivo cargado. Elige los ajustes e inicia la transcripción.",
+errPre:"Error: {0}",hInt:" La huella de la biblioteca no coincide: no continúes y avisa del problema.",hNet:" Comprueba tu conexión a Internet: la biblioteca y el modelo se descargan la primera vez.",hMem:" Memoria insuficiente: elige un modelo más pequeño o un archivo más corto.",
+copiedDet:"Detalles copiados.",txtCopied:"Texto copiado.",verLib:"Verificando la biblioteca Whisper (SHA-384)…",libFail:"No se pudo descargar la biblioteca (HTTP {0})",
+loadModel:"Cargando el modelo ({0})… se descarga la primera vez.",devGpuN:"WebGPU",devCpuN:"procesador",dlModel:"Descargando el modelo… {0} % ({1} de {2})",initModel:"Inicializando el modelo…",
+gpuFail:"WebGPU no arrancó ({0}); paso al procesador…",needGpu:"El modelo «large-v3-turbo» requiere WebGPU, no disponible aquí. Elige el modelo «small».",gpuTr:"WebGPU falló durante la transcripción; paso al procesador (más lento)…",
+stopping:"Deteniendo tras el tramo actual… (el progreso queda guardado)",analyzing:"Analizando el archivo…",idxMp3:"Indexando tramas MP3…",decFull:"Decodificando todo el archivo (puede tardar)…",
+tooBig:"Este formato debe decodificarse entero en memoria y el archivo pesa {0}. Conviértelo a MP3 o WAV (p. ej. con ffmpeg o Audacity) e inténtalo de nuevo.",
+noDur:"No se pudo determinar la duración del archivo.",decFail:"Falló la decodificación en {0}",transc:"Transcribiendo {0} – {1} de {2}…",progEta:"Completado {0} % ({1} de {2}). Tiempo restante: ~{3}.",
+stopped:"Detenido en {0}. Puedes continuar más tarde con el mismo archivo.",done:"Listo: {0} segmentos. Escucha y corrige donde haga falta, luego exporta.",doneDrop:"Listo: {0} segmentos ({1} frases fantasma o repeticiones eliminadas). Escucha y corrige donde haga falta, luego exporta.",
+partQ:"Existe una transcripción parcial{0}. ¿Qué quieres hacer?",partUntil:" hasta {0}",restart:"Empezar de nuevo",cont:"Continuar desde ahí",finfo:"{0} — {1}, duración {2}",docTitle:"Transcripción: {0}",uH:"h",uM:"min",uS:"s"},
+it:{sub:"Trascrizione di audio lunghi direttamente nel browser. Il file non lascia il dispositivo; solo il modello Whisper viene scaricato, una volta sola.",
+h1a:"1. File audio",dropT:"Scegli o trascina qui un file audio",dropInfo:"MP3 e WAV vengono letti a blocchi (durata praticamente illimitata). Gli altri formati (M4A, OGG/Opus, MP4, FLAC) vengono decodificati interi e funzionano bene fino a ~90 minuti.",
+h2a:"2. Impostazioni",lblModel:"Modello",mTiny:"Veloce — tiny (~40 MB, qualità bassa)",mBase:"Equilibrato — base (~80 MB)",mSmall:"Buono — small (~250 MB, consigliato)",mTurbo:"Ottimo — large-v3-turbo (~0,8 GB, solo con WebGPU)",
+lblLang:"Lingua parlata",auto:"Rilevamento automatico",hallu:"Rimuovi le frasi fantasma tipiche di Whisper (es. «Grazie per la visione») e le ripetizioni",
+go:"Avvia la trascrizione",stop:"Ferma",clear:"Cancella la trascrizione",errSum:"Dettagli dell’errore",errCopy:"Copia i dettagli per l’assistenza",
+h3a:"3. Trascrizione",hint3:"Premi su un tempo per ascoltare quel punto. Il testo si può correggere direttamente; le esportazioni usano il testo corretto.",
+withts:"Con marcatori di tempo in .txt e .docx",cp:"Copia il testo",foot1:"Whisper funziona con",foot2:"(versione fissata, verificata con impronta SHA-384 prima dell’importazione). Con WebGPU è spesso più veloce del tempo reale; sul processore (WASM) può richiedere più volte la durata dell’audio. Tieni aperta la scheda e lo schermo attivo mentre lavora.",
+uiLang:"Lingua dell’interfaccia",ariaFile:"File audio",ariaSegs:"Segmenti della trascrizione",
+devGpu:"WebGPU disponibile: verrà usata la scheda grafica (di solito molto più veloce).",devCpu:"WebGPU non disponibile: la trascrizione gira sul processore (WASM), più lenta.",devTurbo:" Il modello «large-v3-turbo» non funziona senza WebGPU; scegli «small».",
+none:"Nessuna trascrizione per ora.",count:"{0} segmenti, {1} parole",tsTitle:"Ascolta da qui",segAria:"Testo del segmento a {0}",
+delQ:"Cancellare la trascrizione attuale (e la copia salvata nel browser)?",cancel:"Annulla",del:"Cancella",deleted:"La trascrizione è stata cancellata.",
+savedPartial:"È salvata una trascrizione parziale (fino a {0}). Premi «Avvia» per continuare o ricominciare.",fileLoaded:"File caricato. Scegli le impostazioni e avvia la trascrizione.",
+errPre:"Errore: {0}",hInt:" L’impronta della libreria non corrisponde: non proseguire e segnala il problema.",hNet:" Controlla la connessione a Internet: libreria e modello vengono scaricati al primo utilizzo.",hMem:" Memoria insufficiente: scegli un modello più piccolo o un file più corto.",
+copiedDet:"Dettagli copiati.",txtCopied:"Testo copiato.",verLib:"Verifica della libreria Whisper (SHA-384)…",libFail:"Impossibile scaricare la libreria (HTTP {0})",
+loadModel:"Caricamento del modello ({0})… viene scaricato al primo utilizzo.",devGpuN:"WebGPU",devCpuN:"processore",dlModel:"Download del modello… {0}% ({1} di {2})",initModel:"Inizializzazione del modello…",
+gpuFail:"WebGPU non si è avviata ({0}); passo al processore…",needGpu:"Il modello «large-v3-turbo» richiede WebGPU, non disponibile qui. Scegli il modello «small».",gpuTr:"WebGPU è fallita durante la trascrizione; passo al processore (più lento)…",
+stopping:"Arresto dopo la porzione corrente… (l’avanzamento resta salvato)",analyzing:"Analisi del file…",idxMp3:"Indicizzazione dei frame MP3…",decFull:"Decodifica dell’intero file (può richiedere tempo)…",
+tooBig:"Questo formato va decodificato intero in memoria e il file pesa {0}. Convertilo in MP3 o WAV (es. con ffmpeg o Audacity) e riprova.",
+noDur:"Impossibile determinare la durata del file.",decFail:"Decodifica non riuscita a {0}",transc:"Trascrizione di {0} – {1} su {2}…",progEta:"Completato {0}% ({1} su {2}). Tempo rimanente: ~{3}.",
+stopped:"Fermato a {0}. Potrai continuare più tardi con lo stesso file.",done:"Fatto: {0} segmenti. Ascolta e correggi dove serve, poi esporta.",doneDrop:"Fatto: {0} segmenti ({1} frasi fantasma o ripetizioni rimosse). Ascolta e correggi dove serve, poi esporta.",
+partQ:"Esiste una trascrizione parziale{0}. Cosa vuoi fare?",partUntil:" fino a {0}",restart:"Ricomincia da capo",cont:"Continua da lì",finfo:"{0} — {1}, durata {2}",docTitle:"Trascrizione: {0}",uH:"h",uM:"min",uS:"s"},
+hu:{sub:"Hosszú hangfelvételek átírása közvetlenül a böngészőben. A fájl nem hagyja el az eszközt; csak a Whisper modell töltődik le, egyszer.",
+h1a:"1. Hangfájl",dropT:"Válassz vagy húzz ide egy hangfájlt",dropInfo:"Az MP3 és a WAV darabonként olvasódik (gyakorlatilag korlátlan hosszúságig). A többi formátum (M4A, OGG/Opus, MP4, FLAC) egészben dekódolódik, kb. 90 percig jól működik.",
+h2a:"2. Beállítások",lblModel:"Modell",mTiny:"Gyors — tiny (~40 MB, gyenge minőség)",mBase:"Kiegyensúlyozott — base (~80 MB)",mSmall:"Jó — small (~250 MB, ajánlott)",mTurbo:"Nagyon jó — large-v3-turbo (~0,8 GB, csak WebGPU-val)",
+lblLang:"Beszélt nyelv",auto:"Automatikus felismerés",hallu:"A Whisperre jellemző szellemmondatok (pl. „Köszönöm a figyelmet”) és az ismétlések eltávolítása",
+go:"Átírás indítása",stop:"Leállítás",clear:"Átirat törlése",errSum:"Hiba részletei",errCopy:"Részletek másolása a támogatáshoz",
+h3a:"3. Átirat",hint3:"Kattints egy időpontra, hogy meghallgasd az adott helyet. A szöveg közvetlenül javítható; az exportok a javított szöveget használják.",
+withts:"Időbélyegekkel a .txt és .docx fájlokban",cp:"Szöveg másolása",foot1:"A Whisper ezzel fut:",foot2:"(rögzített verzió, importálás előtt SHA-384 ujjlenyomattal ellenőrizve). WebGPU-val gyakran gyorsabb a valós időnél; processzoron (WASM) a hang hosszának többszöröse is lehet. Tartsd nyitva a lapot és ébren a képernyőt, amíg dolgozik.",
+uiLang:"A felület nyelve",ariaFile:"Hangfájl",ariaSegs:"Az átirat szakaszai",
+devGpu:"A WebGPU elérhető: a videokártyát használja (általában sokkal gyorsabb).",devCpu:"A WebGPU nem érhető el: az átírás a processzoron (WASM) fut, lassabban.",devTurbo:" A „large-v3-turbo” modell WebGPU nélkül nem működik; válaszd a „small” modellt.",
+none:"Még nincs átirat.",count:"{0} szakasz, {1} szó",tsTitle:"Meghallgatás innen",segAria:"Szakasz szövege itt: {0}",
+delQ:"Törlöd a jelenlegi átiratot (és a böngészőben mentett másolatot)?",cancel:"Mégse",del:"Törlés",deleted:"Az átirat törölve lett.",
+savedPartial:"Mentett részleges átirat van (eddig: {0}). Nyomd meg az „Indítás” gombot a folytatáshoz vagy az újrakezdéshez.",fileLoaded:"A fájl betöltve. Válaszd ki a beállításokat és indítsd az átírást.",
+errPre:"Hiba: {0}",hInt:" A könyvtár ujjlenyomata nem egyezik: ne folytasd, és jelezd a problémát.",hNet:" Ellenőrizd az internetkapcsolatot: a könyvtár és a modell az első használatkor töltődik le.",hMem:" Nincs elég memória: válassz kisebb modellt vagy rövidebb fájlt.",
+copiedDet:"A részletek kimásolva.",txtCopied:"A szöveg kimásolva.",verLib:"A Whisper könyvtár ellenőrzése (SHA-384)…",libFail:"A könyvtárat nem sikerült letölteni (HTTP {0})",
+loadModel:"A modell betöltése ({0})… az első használatkor letöltődik.",devGpuN:"WebGPU",devCpuN:"processzor",dlModel:"A modell letöltése… {0}% ({1} / {2})",initModel:"A modell előkészítése…",
+gpuFail:"A WebGPU nem indult el ({0}); átváltok a processzorra…",needGpu:"A „large-v3-turbo” modellhez WebGPU kell, ami itt nem érhető el. Válaszd a „small” modellt.",gpuTr:"A WebGPU hibázott az átírás közben; átváltok a processzorra (lassabb)…",
+stopping:"Leállítás az aktuális szelet után… (az előrehaladás mentve marad)",analyzing:"A fájl elemzése…",idxMp3:"Az MP3-keretek indexelése…",decFull:"A teljes fájl dekódolása (eltarthat egy ideig)…",
+tooBig:"Ezt a formátumot egészben kell dekódolni a memóriában, a fájl pedig {0}. Alakítsd MP3-má vagy WAV-vá (pl. ffmpeg-gel vagy Audacityvel), és próbáld újra.",
+noDur:"A fájl hosszát nem sikerült megállapítani.",decFail:"A dekódolás sikertelen itt: {0}",transc:"Átírás: {0} – {1} / {2}…",progEta:"Kész: {0}% ({1} / {2}). Hátralévő idő: ~{3}.",
+stopped:"Leállítva itt: {0}. Később folytathatod ugyanezzel a fájllal.",done:"Kész: {0} szakasz. Hallgasd meg és javítsd, ahol kell, majd exportálj.",doneDrop:"Kész: {0} szakasz ({1} szellemmondat vagy ismétlés eltávolítva). Hallgasd meg és javítsd, ahol kell, majd exportálj.",
+partQ:"Van részleges átirat{0}. Mit szeretnél tenni?",partUntil:" eddig: {0}",restart:"Újrakezdés",cont:"Folytatás onnan",finfo:"{0} — {1}, hossz: {2}",docTitle:"Átirat: {0}",uH:"ó",uM:"p",uS:"mp"}
+};
+const WLANG={ro:'romanian',en:'english',fr:'french',de:'german',es:'spanish',it:'italian',hu:'hungarian'};
+
+let LANG='ro';
+function tr(k){let s=(I18N[LANG]&&I18N[LANG][k])||I18N.en[k]||k;for(let i=1;i<arguments.length;i++)s=s.split('{'+(i-1)+'}').join(arguments[i]);return s}
+const SR=16000;
+const TF_URL='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/dist/transformers.min.js';
+const TF_SRI='sha384-ypqDKlGaciPzMZFxk0iPx9blYGxbZIWTqZX7f6BuiicO9rTfnXfprLBev5KE5OfK';
+const MODELS={
+ tiny:{wasm:'Xenova/whisper-tiny',gpu:'onnx-community/whisper-tiny',gd:{encoder_model:'fp32',decoder_model_merged:'q4'}},
+ base:{wasm:'Xenova/whisper-base',gpu:'onnx-community/whisper-base',gd:{encoder_model:'fp32',decoder_model_merged:'q4'}},
+ small:{wasm:'Xenova/whisper-small',gpu:'onnx-community/whisper-small',gd:{encoder_model:'fp32',decoder_model_merged:'q4'}},
+ turbo:{wasm:null,gpu:'onnx-community/whisper-large-v3-turbo',gd:{encoder_model:'fp16',decoder_model_merged:'q4'}}
+};
+const HALLU=/(mul[țt]umesc pentru (vizionare|atenție|atentie)|subtitr(are|ări|ari)\b.*(amara|realizat|by)|amara\.org|thanks for watching|thank you for watching|abona[țt]i-v[ăa]|sous-titr|untertitel (der|von)|www\.\S+\.(com|ro|org))/i;
+
+/* ===== Utilitare pure ===== */
+function pad(n,w){return String(n).padStart(w||2,'0')}
+function fmtT(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return(h?pad(h)+':':'')+pad(m)+':'+pad(s%60)}
+function fmtSrt(s,sep){s=Math.max(0,s);const ms=Math.round(s*1000),h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),x=Math.floor(ms%60000/1000);return pad(h)+':'+pad(m)+':'+pad(x)+(sep||',')+pad(ms%1000,3)}
+function fmtDur(s){s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+' '+tr('uH')+' '+pad(m)+' '+tr('uM'):m+' '+tr('uM')+' '+pad(s%60)+' '+tr('uS')}
+function fmtMB(b){return b>=1073741824?(b/1073741824).toFixed(2)+' GB':(b/1048576).toFixed(b>=10485760?0:1)+' MB'}
+
+function resampleMono(mono,from){
+ if(from===SR)return mono;
+ const ratio=from/SR,n=Math.floor(mono.length/ratio),out=new Float32Array(n),L=mono.length;
+ if(ratio>1){
+  /* filtru sinc cu fereastră Hann (3 lobi) ca să nu apară aliasing la 48/44,1 kHz → 16 kHz */
+  const K=3,half=Math.ceil(K*ratio),w=new Float32Array(2*half+1);
+  for(let j=-half;j<=half;j++){const x=j/ratio,sc=x===0?1:Math.sin(Math.PI*x)/(Math.PI*x);w[j+half]=sc*(0.5+0.5*Math.cos(Math.PI*j/(half+1)))}
+  for(let i=0;i<n;i++){
+   const c=Math.round(i*ratio);let acc=0,ws=0;
+   const lo=Math.max(0,c-half),hi=Math.min(L-1,c+half);
+   for(let j=lo;j<=hi;j++){const k=w[j-c+half];acc+=mono[j]*k;ws+=k}
+   out[i]=ws?acc/ws:0;
+  }
+ }else{for(let i=0;i<n;i++){const p=i*ratio,a=Math.floor(p),f=p-a,x=mono[a],y=a+1<L?mono[a+1]:x;out[i]=x+(y-x)*f}}
+ return out;
+}
+function audioBufferToMono16k(buf){
+ const ch=buf.numberOfChannels,n=buf.length,m=new Float32Array(n);
+ for(let c=0;c<ch;c++){const d=buf.getChannelData(c);for(let i=0;i<n;i++)m[i]+=d[i]/ch}
+ return resampleMono(m,buf.sampleRate);
+}
+function rms(a,s,e){let t=0;s=s||0;e=e===undefined?a.length:e;for(let i=s;i<e;i++)t+=a[i]*a[i];return Math.sqrt(t/Math.max(1,e-s))}
+/* alege un punct de tăiere în cea mai liniștită fereastră din jurul lui nominal (în eșantioane) */
+function pickCut(audio,nominal){
+ const win=Math.floor(0.25*SR),hop=Math.floor(0.05*SR),lo=Math.max(win,nominal-8*SR),hi=Math.min(audio.length-win,nominal+8*SR);
+ if(hi<=lo)return Math.min(audio.length,nominal);
+ let best=lo,bv=Infinity;
+ for(let p=lo;p<=hi;p+=hop){const v=rms(audio,p,p+win);if(v<bv){bv=v;best=p}}
+ return best+(win>>1);
+}
+
+/* ===== MP3: indexare pe cadre ===== */
+const BR1=[0,32,40,48,56,64,80,96,112,128,160,192,224,256,320],BR2=[0,8,16,24,32,40,48,56,64,80,96,112,128,144,160];
+function parseMp3Header(b0,b1,b2){
+ if(b0!==0xFF||(b1&0xE0)!==0xE0)return null;
+ const ver=(b1>>3)&3,layer=(b1>>1)&3;
+ if(ver===1||layer!==1)return null;           /* doar MPEG 1/2/2.5, Layer III */
+ const bi=(b2>>4)&15,si=(b2>>2)&3,pd=(b2>>1)&1;
+ if(bi===0||bi===15||si===3)return null;
+ let sr,br,spf,len;
+ if(ver===3){sr=[44100,48000,32000][si];br=BR1[bi];spf=1152;len=Math.floor(144000*br/sr)+pd}
+ else{sr=[22050,24000,16000][si]/(ver===0?2:1);br=BR2[bi];spf=576;len=Math.floor(72000*br/sr)+pd}
+ return{ver,sr,spf,len};
+}
+async function mp3Index(file){
+ const BLK=4<<20,size=file.size;let bs=-1,bb=new Uint8Array(0);
+ async function hdr(i){
+  if(i+4>size)return null;
+  if(i<bs||i+4>bs+bb.length){bs=i;bb=new Uint8Array(await file.slice(i,Math.min(size,i+BLK)).arrayBuffer())}
+  if(i+4>bs+bb.length)return null;
+  const o=i-bs;return parseMp3Header(bb[o],bb[o+1],bb[o+2]);
+ }
+ let pos=0;const id=new Uint8Array(await file.slice(0,10).arrayBuffer());
+ if(id[0]===0x49&&id[1]===0x44&&id[2]===0x33)pos=10+((id[6]&127)<<21|(id[7]&127)<<14|(id[8]&127)<<7|(id[9]&127))+((id[5]&16)?10:0);
+ const offs=[];let first=null,end=pos;
+ while(pos<size-4){
+  const h=await hdr(pos);
+  if(h&&(!first||(h.sr===first.sr&&h.ver===first.ver))){
+   const last=pos+h.len>=size-4,n=last?null:await hdr(pos+h.len);
+   if(last||(n&&n.sr===h.sr&&n.ver===h.ver)){if(!first)first=h;offs.push(pos);pos+=h.len;end=Math.min(size,pos);continue}
+  }
+  pos++;
+ }
+ if(!first||offs.length<10)return null;
+ return{offs,end,sr:first.sr,spf:first.spf,frames:offs.length,duration:offs.length*first.spf/first.sr};
+}
+
+/* ===== WAV ===== */
+async function wavInfo(file){
+ const h=new DataView(await file.slice(0,12).arrayBuffer());
+ if(h.byteLength<12||h.getUint32(0)!==0x52494646||h.getUint32(8)!==0x57415645)return null;
+ let pos=12,fmt=null;
+ while(pos+8<=file.size){
+  const c=new DataView(await file.slice(pos,pos+8).arrayBuffer()),id=c.getUint32(0),len=c.getUint32(4,true);
+  if(id===0x666d7420){
+   const f=new DataView(await file.slice(pos+8,pos+8+Math.min(len,40)).arrayBuffer());
+   let tag=f.getUint16(0,true);const ch=f.getUint16(2,true),sr=f.getUint32(4,true),bits=f.getUint16(14,true);
+   if(tag===0xFFFE&&f.byteLength>=26)tag=f.getUint16(24,true);
+   fmt={tag,ch,sr,bits};
+  }else if(id===0x64617461){
+   if(!fmt)return null;
+   const ds=pos+8;let dl=len;if(dl===0||dl===0xFFFFFFFF||ds+dl>file.size)dl=file.size-ds;
+   const ok=(fmt.tag===1&&[8,16,24,32].includes(fmt.bits))||(fmt.tag===3&&fmt.bits===32);
+   if(!ok||!fmt.ch||!fmt.sr)return null;
+   const fs=fmt.ch*fmt.bits/8;
+   return{...fmt,dataStart:ds,frames:Math.floor(dl/fs),fs,duration:Math.floor(dl/fs)/fmt.sr};
+  }
+  pos+=8+len+(len&1);
+ }
+ return null;
+}
+function wavDecode(ab,w){
+ const n=Math.floor(ab.byteLength/w.fs),dv=new DataView(ab),m=new Float32Array(n),B=w.bits/8;
+ for(let i=0;i<n;i++){
+  let s=0;
+  for(let c=0;c<w.ch;c++){
+   const o=i*w.fs+c*B;let v;
+   if(w.tag===3)v=dv.getFloat32(o,true);
+   else if(w.bits===16)v=dv.getInt16(o,true)/32768;
+   else if(w.bits===8)v=(dv.getUint8(o)-128)/128;
+   else if(w.bits===24){let x=dv.getUint8(o)|(dv.getUint8(o+1)<<8)|(dv.getUint8(o+2)<<16);if(x&0x800000)x|=~0xFFFFFF;v=x/8388608}
+   else v=dv.getInt32(o,true)/2147483648;
+   s+=v;
+  }
+  m[i]=s/w.ch;
+ }
+ return resampleMono(m,w.sr);
+}
+
+/* ===== Sursa audio (felii de 16 kHz mono) ===== */
+let _ctx=null;
+function decCtx(){
+ if(_ctx)return _ctx;
+ try{_ctx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:SR})}catch(e){_ctx=new (window.AudioContext||window.webkitAudioContext)()}
+ return _ctx;
+}
+function decodeAB(ab){
+ const c=decCtx();
+ return new Promise((res,rej)=>{const p=c.decodeAudioData(ab,res,rej);if(p&&p.catch)p.catch(rej)});
+}
+async function openSource(file,onmsg){
+ const lname=file.name.toLowerCase();
+ if(!/\.(m4a|mp4|ogg|opus|flac|aac|webm)$/.test(lname)){
+  const w=await wavInfo(file).catch(()=>null);
+  if(w)return{kind:'wav',duration:w.duration,
+   async getSlice(t0,t1){
+    const a=Math.max(0,Math.floor(t0*w.sr)),b=Math.min(w.frames,Math.ceil(t1*w.sr));
+    const ab=await file.slice(w.dataStart+a*w.fs,w.dataStart+b*w.fs).arrayBuffer();
+    return{audio:wavDecode(ab,w),start:a/w.sr};
+   }};
+  onmsg&&onmsg(tr('idxMp3'));
+  const ix=await mp3Index(file).catch(()=>null);
+  if(ix)return{kind:'mp3',duration:ix.duration,
+   async getSlice(t0,t1){
+    const i0=Math.min(ix.frames-1,Math.max(0,Math.floor(t0*ix.sr/ix.spf))),i1=Math.min(ix.frames,Math.max(i0+1,Math.ceil(t1*ix.sr/ix.spf))),lead=Math.min(3,i0);
+    const bytes=file.slice(ix.offs[i0-lead],i1<ix.frames?ix.offs[i1]:ix.end);
+    const buf=await decodeAB(await bytes.arrayBuffer());
+    let a=audioBufferToMono16k(buf);
+    const drop=Math.round(lead*ix.spf/ix.sr*SR);
+    if(drop>0)a=a.subarray(Math.min(drop,a.length));
+    return{audio:a,start:i0*ix.spf/ix.sr};
+   }};
+ }
+ if(file.size>600*1048576)throw new Error(tr('tooBig',fmtMB(file.size)));
+ onmsg&&onmsg(tr('decFull'));
+ const buf=await decodeAB(await file.arrayBuffer());
+ const all=audioBufferToMono16k(buf);
+ return{kind:'full',duration:all.length/SR,async getSlice(t0,t1){const a=Math.floor(t0*SR),b=Math.min(all.length,Math.ceil(t1*SR));return{audio:all.subarray(a,b),start:a/SR}}};
+}
+
+/* ===== Post-procesare segmente ===== */
+function normT(t){return t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim()}
+function cleanSegs(segs,filterHallu){
+ const out=[];let dropped=0,prev='',run=0;
+ for(const g of segs){
+  const t=g.t.replace(/\s+/g,' ').trim();
+  if(!t){dropped++;continue}
+  if(filterHallu&&HALLU.test(t)&&t.length<90){dropped++;continue}
+  const k=normT(t);
+  run=(k&&k===prev)?run+1:1;prev=k;
+  if(filterHallu&&run>2){dropped++;continue}   /* bucle Whisper: păstrăm cel mult 2 repetări la rând */
+  out.push({s:g.s,e:g.e,t});
+ }
+ return{segs:out,dropped};
+}
+function chunksToSegs(chunks,offset,sliceEnd){
+ const out=[];
+ for(let i=0;i<chunks.length;i++){
+  const c=chunks[i],ts=c.timestamp||[0,null];
+  const s=offset+(ts[0]||0);let e=ts[1]==null?(i+1<chunks.length&&chunks[i+1].timestamp?offset+(chunks[i+1].timestamp[0]||0):sliceEnd):offset+ts[1];
+  if(e<s)e=s;
+  out.push({s,e,t:(c.text||'').trim()});
+ }
+ return out;
+}
+
+/* ===== Export ===== */
+function paragraphs(segs){
+ const ps=[];let cur=[],len=0,lastE=null;
+ for(const g of segs){
+  if(cur.length&&((lastE!==null&&g.s-lastE>2.5)||(len>500&&/[.?!…»”"]$/.test(cur[cur.length-1].t)))){ps.push(cur);cur=[];len=0}
+  cur.push(g);len+=g.t.length+1;lastE=g.e;
+ }
+ if(cur.length)ps.push(cur);
+ return ps;
+}
+function buildTxt(segs,withTs){
+ if(withTs)return segs.map(g=>'['+fmtT(g.s)+'] '+g.t).join('\n')+'\n';
+ return paragraphs(segs).map(p=>p.map(g=>g.t).join(' ')).join('\n\n')+'\n';
+}
+function cueEnd(segs,i){const g=segs[i],nx=segs[i+1];let e=g.e;if(e<=g.s)e=g.s+Math.max(1,g.t.length*0.06);if(nx&&e>nx.s&&nx.s>g.s)e=nx.s;return e}
+function buildSrt(segs){return segs.map((g,i)=>(i+1)+'\n'+fmtSrt(g.s)+' --> '+fmtSrt(cueEnd(segs,i))+'\n'+g.t+'\n').join('\n')}
+function buildVtt(segs){return 'WEBVTT\n\n'+segs.map((g,i)=>fmtSrt(g.s,'.')+' --> '+fmtSrt(cueEnd(segs,i),'.')+'\n'+g.t+'\n').join('\n')}
+function xmlEsc(s){return s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+let _crcT=null;
+function crc32(u8){
+ if(!_crcT){_crcT=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;_crcT[n]=c>>>0}}
+ let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=_crcT[(c^u8[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0;
+}
+function zipStore(files){
+ const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+ for(const f of files){
+  const name=enc.encode(f.name),data=typeof f.data==='string'?enc.encode(f.data):f.data,crc=crc32(data);
+  const lh=new DataView(new ArrayBuffer(30));
+  lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint16(10,0,true);lh.setUint16(12,0x21,true);
+  lh.setUint32(14,crc,true);lh.setUint32(18,data.length,true);lh.setUint32(22,data.length,true);lh.setUint16(26,name.length,true);lh.setUint16(28,0,true);
+  parts.push(new Uint8Array(lh.buffer),name,data);
+  const ch=new DataView(new ArrayBuffer(46));
+  ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);ch.setUint16(12,0,true);ch.setUint16(14,0x21,true);
+  ch.setUint32(16,crc,true);ch.setUint32(20,data.length,true);ch.setUint32(24,data.length,true);ch.setUint16(28,name.length,true);ch.setUint32(42,off,true);
+  cd.push(new Uint8Array(ch.buffer),name);
+  off+=30+name.length+data.length;
+ }
+ let cdSize=0;for(const c of cd)cdSize+=c.length;
+ const e=new DataView(new ArrayBuffer(22));
+ e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cdSize,true);e.setUint32(16,off,true);
+ return new Blob([...parts,...cd,new Uint8Array(e.buffer)],{type:'application/zip'});
+}
+function buildDocx(segs,title,withTs){
+ const W='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+ const run=(t,b)=>'<w:r>'+(b?'<w:rPr><w:b/></w:rPr>':'')+'<w:t xml:space="preserve">'+xmlEsc(t)+'</w:t></w:r>';
+ let body='<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="36"/></w:rPr><w:t xml:space="preserve">'+xmlEsc(title)+'</w:t></w:r></w:p>';
+ if(withTs)for(const g of segs)body+='<w:p><w:pPr><w:spacing w:after="80"/></w:pPr>'+run('['+fmtT(g.s)+'] ',true)+run(g.t)+'</w:p>';
+ else for(const p of paragraphs(segs))body+='<w:p><w:pPr><w:spacing w:after="160"/><w:jc w:val="both"/></w:pPr>'+run(p.map(g=>g.t).join(' '))+'</w:p>';
+ body+='<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>';
+ const X='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+ return zipStore([
+  {name:'[Content_Types].xml',data:X+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'},
+  {name:'_rels/.rels',data:X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'},
+  {name:'word/document.xml',data:X+'<w:document '+W+'><w:body>'+body+'</w:body></w:document>'}
+ ]).slice(0,undefined,'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+}
+
+/* ===== Interfața ===== */
+if(typeof document!=='undefined'){(function(){
+const $=id=>document.getElementById(id);
+const S={file:null,src:null,segs:[],dur:0,running:false,cancel:false,asr:null,asrKey:'',dev:'wasm',url:null,tf:null,gpuOK:null,rows:[],curIdx:-1};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+
+function msg(t,err){const s=$('status');s.textContent=t;s.className=err?'er':''}
+function ask(q,labels){
+ return new Promise(res=>{
+  const d=$('dlg'),b=$('dlgb');$('dlgq').textContent=q;b.textContent='';
+  labels.forEach((l,i)=>{const x=document.createElement('button');x.textContent=l;if(i===labels.length-1)x.className='pri';x.onclick=()=>{d.close();res(i)};b.appendChild(x)});
+  d.oncancel=e=>{e.preventDefault()};
+  if(d.showModal)d.showModal();else d.setAttribute('open','');
+  b.lastChild.focus();
+ });
+}
+function showErr(e,ctx){
+ const m=(e&&e.message)||String(e);
+ let hint='';
+ if(/digest|integrity/i.test(m))hint=tr('hInt');
+ else if(/fetch|network|Failed to load|NetworkError|load failed/i.test(m))hint=tr('hNet');
+ else if(/memory|alloc/i.test(m))hint=tr('hMem');
+ msg(tr('errPre',m)+hint,true);
+ $('errtxt').textContent=['STENOGRAMA','Error: '+m,(e&&e.stack)||'','Context: '+(ctx||''),'File: '+(S.file?S.file.name+' ('+fmtMB(S.file.size)+', '+(S.file.type||'?')+', source '+(S.src?S.src.kind:'?')+')':'-'),'Engine device: '+S.dev,'WebGPU: '+(navigator.gpu?'yes':'no'),'Browser: '+navigator.userAgent].join('\n');
+ $('errbox').hidden=false;
+}
+$('errcopy').onclick=()=>copyText($('errtxt').textContent).then(()=>msg(tr('copiedDet')));
+async function copyText(t){
+ try{await navigator.clipboard.writeText(t);return}catch(e){}
+ const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();
+}
+
+/* preferințe */
+let P={};try{P=JSON.parse(store.get('stenograma:prefs')||'{}')||{}}catch(e){P={}}
+(function(){
+ let l=P.ui;
+ if(!(l&&I18N[l])){l='en';for(const c of (navigator.languages||[navigator.language||'en'])){const x=String(c).slice(0,2).toLowerCase();if(I18N[x]){l=x;break}}}
+ LANG=l;
+ if(P.model&&MODELS[P.model])$('model').value=P.model;
+ $('lang').value=P.lang||WLANG[LANG];
+ if(typeof P.hallu==='boolean')$('hallu').checked=P.hallu;if(typeof P.withts==='boolean')$('withts').checked=P.withts;
+})();
+function savePrefs(){P={ui:LANG,model:$('model').value,lang:$('lang').value,hallu:$('hallu').checked,withts:$('withts').checked};store.set('stenograma:prefs',JSON.stringify(P))}
+function updDev(){
+ const g=!!navigator.gpu,m=$('model').value;
+ $('devinfo').textContent=g?tr('devGpu'):tr('devCpu')+(m==='turbo'?tr('devTurbo'):'');
+}
+function applyLang(){
+ document.documentElement.lang=LANG;$('ui').value=LANG;
+ document.querySelectorAll('[data-i18n]').forEach(e=>{e.textContent=tr(e.getAttribute('data-i18n'))});
+ document.querySelectorAll('[data-i18n-aria]').forEach(e=>{e.setAttribute('aria-label',tr(e.getAttribute('data-i18n-aria')))});
+ document.title='STENOGRAMA — '+tr('h3a').replace(/^\d+\.\s*/,'');
+ updDev();if(S.file)$('finfo').textContent=S.dur?tr('finfo',S.file.name,fmtMB(S.file.size),fmtDur(S.dur)):S.file.name+' — '+fmtMB(S.file.size);
+ S.rows.forEach((r,i)=>{if(r&&S.segs[i]){r.querySelector('.ts').title=tr('tsTitle');r.querySelector('.tx').setAttribute('aria-label',tr('segAria',fmtT(S.segs[i].s)))}});
+ upd();
+}
+['model','lang','hallu','withts'].forEach(i=>$(i).addEventListener('change',()=>{savePrefs();updDev()}));
+$('ui').addEventListener('change',e=>{const old=WLANG[LANG];LANG=e.target.value;if($('lang').value===old)$('lang').value=WLANG[LANG];savePrefs();applyLang()});
+
+/* fișier */
+const drop=$('drop');
+drop.onclick=()=>$('file').click();
+drop.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('file').click()}};
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('on')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('on')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f)setFile(f)});
+$('file').onchange=e=>{if(e.target.files[0])setFile(e.target.files[0])};
+function fkey(){return 'stenograma:t:'+S.file.name+'|'+S.file.size+'|'+S.file.lastModified}
+function setFile(f){
+ if(S.running)return;
+ S.file=f;S.src=null;S.dur=0;
+ if(S.url)URL.revokeObjectURL(S.url);
+ S.url=URL.createObjectURL(f);const p=$('player');p.src=S.url;p.hidden=false;
+ $('finfo').textContent=f.name+' — '+fmtMB(f.size);
+ $('go').disabled=false;
+ resetList();
+ const sv=store.get(fkey());
+ if(sv){try{const o=JSON.parse(sv);if(o.segs&&o.segs.length){S.segs=o.segs;renderAll();msg(tr('savedPartial',fmtT(o.done||0)))}}catch(e){}}
+ else msg(tr('fileLoaded'));
+ $('errbox').hidden=true;
+}
+
+/* listă segmente */
+function resetList(){S.segs=[];S.rows=[];S.curIdx=-1;$('list').textContent='';upd()}
+function addRow(i){
+ const g=S.segs[i],r=document.createElement('div');r.className='seg';
+ const b=document.createElement('button');b.className='ts';b.textContent=fmtT(g.s);b.title=tr('tsTitle');b.onclick=()=>{const p=$('player');p.currentTime=g.s;p.play().catch(()=>{})};
+ const tx=document.createElement('div');tx.className='tx';tx.contentEditable='true';tx.spellcheck=true;tx.textContent=g.t;tx.setAttribute('aria-label',tr('segAria',fmtT(g.s)));
+ tx.addEventListener('input',()=>{g.t=tx.textContent;saveSoon()});
+ tx.addEventListener('paste',e=>{e.preventDefault();const x=(e.clipboardData||window.clipboardData).getData('text').replace(/\s+/g,' ');document.execCommand('insertText',false,x)});
+ r.append(b,tx);$('list').appendChild(r);S.rows[i]=r;
+}
+function renderAll(){$('list').textContent='';S.rows=[];S.segs.forEach((_,i)=>addRow(i));upd()}
+function upd(){
+ const n=S.segs.length,w=S.segs.reduce((a,g)=>a+(g.t.trim()?g.t.trim().split(/\s+/).length:0),0);
+ $('count').textContent=n?tr('count',n,w):tr('none');
+ ['cp','dtxt','dsrt','dvtt','ddocx','clear'].forEach(i=>$(i).disabled=!n||(S.running&&i==='clear'));
+}
+let saveT=null;
+function saveSoon(){clearTimeout(saveT);saveT=setTimeout(saveNow,600)}
+function saveNow(){
+ if(!S.file)return;
+ const s=JSON.stringify({segs:S.segs,done:S.done||0});
+ if(s.length<3e6)store.set(fkey(),s);
+}
+$('player').addEventListener('timeupdate',()=>{
+ const t=$('player').currentTime;let lo=0,hi=S.segs.length-1,idx=-1;
+ while(lo<=hi){const m=(lo+hi)>>1;if(S.segs[m].s<=t){idx=m;lo=m+1}else hi=m-1}
+ if(idx!==S.curIdx){if(S.rows[S.curIdx])S.rows[S.curIdx].classList.remove('cur');S.curIdx=idx;if(S.rows[idx]){S.rows[idx].classList.add('cur');if(!S.running&&document.activeElement.className!=='tx'){const l=$('list'),r=S.rows[idx];if(r.offsetTop<l.scrollTop||r.offsetTop+r.offsetHeight>l.scrollTop+l.clientHeight)l.scrollTop=r.offsetTop-40}}}
+});
+$('clear').onclick=async()=>{if(S.running||!S.segs.length)return;const k=await ask(tr('delQ'),[tr('cancel'),tr('del')]);if(k===1){if(S.file)store.del(fkey());resetList();msg(tr('deleted'))}};
+
+/* motor */
+async function loadTF(){
+ if(S.tf)return S.tf;
+ msg(tr('verLib'));
+ const r=await fetch(TF_URL,{integrity:TF_SRI,mode:'cors'});
+ if(!r.ok)throw new Error(tr('libFail',r.status));
+ await r.arrayBuffer();
+ const tf=await import(TF_URL);
+ tf.env.allowLocalModels=false;
+ S.tf=tf;return tf;
+}
+async function gpuUsable(){
+ if(S.gpuOK!==null)return S.gpuOK;
+ try{const a=navigator.gpu&&await navigator.gpu.requestAdapter();S.gpuOK=!!a}catch(e){S.gpuOK=false}
+ return S.gpuOK;
+}
+async function getAsr(mk,forceWasm){
+ const M=MODELS[mk],gpu=!forceWasm&&await gpuUsable();
+ if(!gpu&&!M.wasm)throw new Error(tr('needGpu'));
+ const dev=gpu?'webgpu':'wasm',key=mk+'|'+dev;
+ if(S.asr&&S.asrKey===key){S.dev=dev;return S.asr}
+ const tf=await loadTF(),files={};
+ const cb=p=>{
+  if(!p)return;
+  if(p.status==='progress'&&p.file&&typeof p.total==='number'){files[p.file]={l:p.loaded,t:p.total};let l=0,t=0;for(const k in files){l+=files[k].l;t+=files[k].t}msg(tr('dlModel',Math.round(100*l/Math.max(1,t)),fmtMB(l),fmtMB(t)))}
+  else if(p.status==='ready')msg(tr('initModel'));
+ };
+ msg(tr('loadModel',gpu?tr('devGpuN'):tr('devCpuN')));
+ try{
+  const asr=await tf.pipeline('automatic-speech-recognition',gpu?M.gpu:M.wasm,gpu?{device:'webgpu',dtype:M.gd,progress_callback:cb}:{device:'wasm',dtype:'q8',progress_callback:cb});
+  S.asr=asr;S.asrKey=key;S.dev=dev;return asr;
+ }catch(e){
+  if(gpu&&M.wasm){msg(tr('gpuFail',(e&&e.message)||e));S.gpuOK=false;return getAsr(mk,true)}
+  throw e;
+ }
+}
+async function transcribe(piece,lang,mk){
+ const o={task:'transcribe',chunk_length_s:30,stride_length_s:5,return_timestamps:true};
+ if(lang!=='auto')o.language=lang;
+ try{return await S.asr(piece,o)}
+ catch(e){
+  if(S.dev==='webgpu'&&MODELS[mk].wasm){msg(tr('gpuTr'));S.asr=null;S.gpuOK=false;await getAsr(mk,true);return await S.asr(piece,o)}
+  throw e;
+ }
+}
+
+/* wake lock */
+let wl=null;
+async function lock(){try{if(navigator.wakeLock&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null})}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(S.running&&document.visibilityState==='visible')lock()});
+window.addEventListener('beforeunload',e=>{if(S.running){e.preventDefault();e.returnValue=''}});
+
+function busy(b){S.running=b;$('go').disabled=b||!S.file;$('stop').disabled=!b;$('model').disabled=b;$('lang').disabled=b;$('file').disabled=b;$('prog').hidden=!b&&$('prog').value===0;upd()}
+$('stop').onclick=()=>{S.cancel=true;$('stop').disabled=true;msg(tr('stopping'))};
+
+$('go').onclick=async()=>{
+ if(S.running||!S.file)return;
+ $('errbox').hidden=true;
+ const mk=$('model').value,lang=$('lang').value,filt=$('hallu').checked;
+ let pos=0;
+ if(S.segs.length){
+  const done=(()=>{try{return JSON.parse(store.get(fkey())||'{}').done||0}catch(e){return 0}})();
+  const k=await ask(tr('partQ',done?tr('partUntil',fmtT(done)):''),[tr('restart'),tr('cont')]);
+  if(k===1&&done>0)pos=done;else{resetList();store.del(fkey())}
+ }
+ busy(true);S.cancel=false;await lock();
+ $('prog').hidden=false;$('prog').value=0;
+ try{
+  msg(tr('analyzing'));
+  if(!S.src)S.src=await openSource(S.file,msg);
+  const dur=S.dur=S.src.duration;
+  if(!(dur>0))throw new Error(tr('noDur'));
+  $('finfo').textContent=tr('finfo',S.file.name,fmtMB(S.file.size),fmtDur(dur));
+  const asr=await getAsr(mk);void asr;
+  const N=S.dev==='webgpu'?240:120;
+  const t0=performance.now(),p0=pos;let dropped=0;
+  S.done=pos;
+  while(pos<dur-0.2){
+   if(S.cancel)break;
+   const isLast=pos+N+10>=dur;
+   const got=await S.src.getSlice(pos,Math.min(dur,pos+N+10));
+   if(!got.audio.length){if(isLast)break;throw new Error(tr('decFail',fmtT(pos)))}
+   const cut=isLast?got.audio.length:pickCut(got.audio,N*SR);
+   const piece=got.audio.subarray(0,cut),sliceStart=got.start;
+   msg(tr('transc',fmtT(sliceStart),fmtT(sliceStart+cut/SR),fmtT(dur)));
+   if(rms(piece)>0.0005){
+    const out=await transcribe(piece,lang,mk);
+    const raw=chunksToSegs(out.chunks||[{text:out.text,timestamp:[0,cut/SR]}],sliceStart,sliceStart+cut/SR);
+    const cl=cleanSegs(raw,filt);dropped+=cl.dropped;
+    let add=cl.segs;
+    if(filt&&S.segs.length&&add.length&&normT(add[0].t)===normT(S.segs[S.segs.length-1].t)){add=add.slice(1);dropped++}
+    for(const g of add){S.segs.push(g);addRow(S.segs.length-1)}
+    upd();
+    const l=$('list');l.scrollTop=l.scrollHeight;
+   }
+   const adv=cut/SR;pos=Math.max(pos+1,sliceStart+adv);
+   S.done=Math.min(pos,dur);saveNow();
+   const frac=Math.min(1,pos/dur),el=(performance.now()-t0)/1000,rate=(pos-p0)/Math.max(0.1,el);
+   $('prog').value=Math.round(frac*1000);
+   if(rate>0&&!isLast)msg(tr('progEta',Math.round(frac*100),fmtT(pos),fmtT(dur),fmtDur((dur-pos)/rate)));
+   await new Promise(r=>setTimeout(r));
+  }
+  if(S.cancel){msg(tr('stopped',fmtT(S.done)))}
+  else{S.done=dur;saveNow();$('prog').value=1000;msg(dropped?tr('doneDrop',S.segs.length,dropped):tr('done',S.segs.length))}
+ }catch(e){showErr(e,'pos='+pos+', model='+mk+', lang='+lang)}
+ finally{try{wl&&wl.release()}catch(_){}wl=null;busy(false)}
+};
+
+/* export */
+function baseName(){return(S.file?S.file.name:'transcriere').replace(/\.[^.]+$/,'')}
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
+function cur(){return S.segs.filter(g=>g.t.trim())}
+$('cp').onclick=async()=>{await copyText(buildTxt(cur(),$('withts').checked));msg(tr('txtCopied'))};
+$('dtxt').onclick=()=>dl(new Blob([buildTxt(cur(),$('withts').checked)],{type:'text/plain;charset=utf-8'}),baseName()+'.txt');
+$('dsrt').onclick=()=>dl(new Blob([buildSrt(cur())],{type:'application/x-subrip;charset=utf-8'}),baseName()+'.srt');
+$('dvtt').onclick=()=>dl(new Blob([buildVtt(cur())],{type:'text/vtt;charset=utf-8'}),baseName()+'.vtt');
+$('ddocx').onclick=()=>dl(buildDocx(cur(),tr('docTitle',baseName()),$('withts').checked),baseName()+'.docx');
+applyLang();
+})()}
+if(typeof navigator!=='undefined'&&'serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
+</script>
+</body>
+</html>
